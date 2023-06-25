@@ -1,0 +1,9 @@
+*
+!*/
+!*.*
+
+*.o
+*.bin
+bin/
+*.save
+.vscode/
