@@ -28,3 +28,7 @@ I could also do a JMP to 0x07c0:0 which would be the same physical address
 
 the DS register matters though. ORG will change where absolute data adresses are, and thus DS needs to be set accordingly
 if ORG is 0, then DS should be 0x07c0, if ORG is 0x7c00, then ds should be 0
+
+6/24: jumps to protected mode and loads disk correctly, next step: writing the kernel and loading
+it to disk image. Also the stage0 bootloader is almost out of memory, you should probably add a 2nd
+stage so you can get more information from the bios (memory map info, device info)

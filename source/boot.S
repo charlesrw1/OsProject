@@ -1,4 +1,4 @@
-bits 16
+[bits 16]
 
 ORG 0x7c00
 section .text
@@ -41,7 +41,7 @@ go:
     mov DWORD [dp_src_sector],1             
     mov WORD [dp_dest_segment],0x1000     ; load kernel at physical address 0x1'00'00
     mov WORD [dp_dest_offset],0
-    mov WORD [dp_num_sectors],0x3       ; 64*512 = 32kb of memory
+    mov WORD [dp_num_sectors],0x1       ; 64*512 = 32kb of memory
 
     int 0x13
     jc disk_error
@@ -52,19 +52,37 @@ go:
     jne a20_not_preenabled
 
 
-    mov si,welcome_msg
+    mov esi,welcome_msg
     call print
 
     ; setup GDT and IDT
-
-    ; jump to C code
-
-
-
     cli
-    hlt
+    lgdt [gdt_r]
+    mov eax, cr0
+    or eax, 1
+    mov cr0,eax
 
-; FIXME: not an error, qemu has it preeneabled
+    jmp 0x8:.entry_32
+
+[bits 32]
+.entry_32:
+    mov esp, 0x3000
+
+    ; set registers
+    mov ax,0x10  ; data entry is offset 16 bytes in GDT
+    mov ds,ax
+    mov es,ax
+    mov fs,ax
+    mov gs,ax
+    mov ss,ax
+
+    ;jmp 0x10000    ; jump to kernel entry point at 0x10000
+
+    jmp 0x10000
+    hlt
+[bits 16]
+
+; FIXME: not an error, qemu has it preeneabled though
 a20_not_preenabled:
     mov si, a20_enabled_str
     call print
@@ -79,7 +97,7 @@ disk_error:
     call print
 
     ; error code on stack
-    call print_address
+    ;call print_address
 
     cli
     hlt
@@ -160,64 +178,64 @@ check_a20__exit:
     ret
 
 ; converts 1 byte to hex character, returns eax
-int_to_hex:
-    push bp
-    mov bp, sp
-
-    xor eax,eax
-    mov al, [bp+4]
-    cmp al,9
-    jg .b1
-    add al, '0'
-    jmp .b2
-    .b1:
-    sub al, 10
-    add al, 'A'
-    .b2:
-
-    mov sp, bp
-    pop bp
-    ret
-
-print_address:
-    push bp         ; caller base stack pointer
-    mov bp, sp      ; base pointer = stack pointer
-    sub sp, 4       ; 4 bytes local variables
-
-    mov ax, [bp+4]
-    mov word [bp-2], ax
-    mov byte [bp-3], 0
-
-.loop_start:
-    cmp byte [bp-3], 4
-    jnl .loop_end
-
-    xor eax, eax
-    mov ax, word [bp-2]
-    and ax, 0xf000
-    shr ax, 12
-
-    push ax
-    call int_to_hex
-    add sp,2
-    ; return value in eax
-    
-    mov bh, 0x00        ; page number, 0 again
-    mov bl, 0x00        ; foreground color, irrelevant - in text mode
-    mov ah, 0x0E        ; print character to TTY
-    int 0x10            ; print the character if we're not done
-    
-    mov ax, word[bp-2]
-    shl ax, 4
-    mov word[bp-2], ax
-    mov al,byte[bp-3]
-    add al, 1
-    mov byte[bp-3], al
-    jmp .loop_start 
-.loop_end:
-    mov sp, bp
-    pop bp
-    ret
+;int_to_hex:
+;    push bp
+;    mov bp, sp
+;
+;    xor eax,eax
+;    mov al, [bp+4]
+;    cmp al,9
+;    jg .b1
+;    add al, '0'
+;    jmp .b2
+;    .b1:
+;    sub al, 10
+;    add al, 'A'
+;    .b2:
+;
+;    mov sp, bp
+;    pop bp
+;    ret
+;
+;print_address:
+;    push bp         ; caller base stack pointer
+;    mov bp, sp      ; base pointer = stack pointer
+;    sub sp, 4       ; 4 bytes local variables
+;
+;    mov ax, [bp+4]
+;    mov word [bp-2], ax
+;    mov byte [bp-3], 0
+;
+;.loop_start:
+;    cmp byte [bp-3], 4
+;    jnl .loop_end
+;
+;    xor eax, eax
+;    mov ax, word [bp-2]
+;    and ax, 0xf000
+;    shr ax, 12
+;
+;    push ax
+;    call int_to_hex
+;    add sp,2
+;    ; return value in eax
+;    
+;    mov bh, 0x00        ; page number, 0 again
+;    mov bl, 0x00        ; foreground color, irrelevant - in text mode
+;    mov ah, 0x0E        ; print character to TTY
+;    int 0x10            ; print the character if we're not done
+;    
+;    mov ax, word[bp-2]
+;    shl ax, 4
+;    mov word[bp-2], ax
+;    mov al,byte[bp-3]
+;    add al, 1
+;    mov byte[bp-3], al
+;    jmp .loop_start 
+;.loop_end:
+;    mov sp, bp
+;    pop bp
+;    ret
 
 ; Prints null terminated string in SI to screen
 print:
@@ -246,10 +264,14 @@ extensions_not_supported_str:
 a20_enabled_str:
     db "A20 NOT PREENABLED", 0
 
-;align 8     ; align gdt on 8 byte boundaries
-
+align 16
+gdt_r:
+    dw gdt_end - gdt - 1
+    dd gdt
+align 16
 gdt:
-    dq 0 ; null entry
+    dd 0 ; null entry
+    dd 0
 gdt_code_segment:
     dw 0xffff     ; limit (address range)
     dw 0x0000     ; base (address start)
@@ -281,7 +303,3 @@ dp_src_sector:
 
 times 510-($-$$) db 0
 dw 0xAA55
-
-second_message:
-db "THIS IS LOADED OFF THE 2nd BOOTSECTOR!!", 0
-times 1000 db 0
