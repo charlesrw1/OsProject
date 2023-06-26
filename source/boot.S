@@ -41,7 +41,7 @@ go:
     mov DWORD [dp_src_sector],1             
     mov WORD [dp_dest_segment],0x1000     ; load kernel at physical address 0x1'00'00
     mov WORD [dp_dest_offset],0
-    mov WORD [dp_num_sectors],0x1       ; 64*512 = 32kb of memory
+    mov WORD [dp_num_sectors],17       ;  load 9 sectors
 
     int 0x13
     jc disk_error
@@ -60,15 +60,12 @@ go:
     lgdt [gdt_r]
     mov eax, cr0
     or eax, 1
-    mov cr0,eax
+    mov cr0,eax         ; set protection ebaled
 
-    jmp 0x8:.entry_32
+    jmp 0x8:.entry_32   ; 8=offset in gdt for code entry
 
 [bits 32]
 .entry_32:
-    mov esp, 0x3000
-
-    ; set registers
     mov ax,0x10  ; data entry is offset 16 bytes in GDT
     mov ds,ax
     mov es,ax
@@ -76,9 +73,7 @@ go:
     mov gs,ax
     mov ss,ax
 
-    ;jmp 0x10000    ; jump to kernel entry point at 0x10000
-
-    jmp 0x10000
+    jmp 0x10000 ; take jump to kernel entry
     hlt
 [bits 16]
 
