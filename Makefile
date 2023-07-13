@@ -1,6 +1,6 @@
 CC=i386-elf-gcc
 LD=i386-elf-ld
-CFLAGS=
+CFLAGS=-ffreestanding
 
 KERNELSRC = $(wildcard ./source/*.c)
 KERNELOBJ = $(KERNELSRC:.c=.o)

@@ -41,15 +41,17 @@ go:
     mov DWORD [dp_src_sector],1             
     mov WORD [dp_dest_segment],0x1000     ; load kernel at physical address 0x1'00'00
     mov WORD [dp_dest_offset],0
-    mov WORD [dp_num_sectors],17       ;  load 9 sectors
+
+    ;       FIX ME:
+    mov WORD [dp_num_sectors],9       ;  load 9 sectors
 
     int 0x13
     jc disk_error
 
     ; enable a20 to go to protected mode
-    call check_a20
-    cmp ax, 1
-    jne a20_not_preenabled
+    ;call check_a20
+    ;cmp ax, 1
+    ;jne a20_not_preenabled
 
 
     mov esi,welcome_msg
@@ -92,7 +94,7 @@ disk_error:
     call print
 
     ; error code on stack
-    ;call print_address
+    call print_address
 
     cli
     hlt
@@ -123,114 +125,114 @@ movecursor:
 
 ; check if a20 is enabled
 ; returns 0 in ax if disabled, 1 if enabled
-check_a20:
-    pushf
-    push ds
-    push es
-    push di
-    push si
- 
-    cli
- 
-    xor ax, ax ; ax = 0
-    mov es, ax
- 
-    not ax ; ax = 0xFFFF
-    mov ds, ax
- 
-    mov di, 0x0500
-    mov si, 0x0510
- 
-    mov al, byte [es:di]
-    push ax
- 
-    mov al, byte [ds:si]
-    push ax
- 
-    mov byte [es:di], 0x00
-    mov byte [ds:si], 0xFF
- 
-    cmp byte [es:di], 0xFF
- 
-    pop ax
-    mov byte [ds:si], al
- 
-    pop ax
-    mov byte [es:di], al
- 
-    mov ax, 0
-    je check_a20__exit
- 
-    mov ax, 1
- 
-check_a20__exit:
-    pop si
-    pop di
-    pop es
-    pop ds
-    popf
- 
-    ret
+;check_a20:
+;    pushf
+;    push ds
+;    push es
+;    push di
+;    push si
+; 
+;    cli
+; 
+;    xor ax, ax ; ax = 0
+;    mov es, ax
+; 
+;    not ax ; ax = 0xFFFF
+;    mov ds, ax
+; 
+;    mov di, 0x0500
+;    mov si, 0x0510
+; 
+;    mov al, byte [es:di]
+;    push ax
+; 
+;    mov al, byte [ds:si]
+;    push ax
+; 
+;    mov byte [es:di], 0x00
+;    mov byte [ds:si], 0xFF
+; 
+;    cmp byte [es:di], 0xFF
+; 
+;    pop ax
+;    mov byte [ds:si], al
+; 
+;    pop ax
+;    mov byte [es:di], al
+; 
+;    mov ax, 0
+;    je check_a20__exit
+; 
+;    mov ax, 1
+; 
+;check_a20__exit:
+;    pop si
+;    pop di
+;    pop es
+;    pop ds
+;    popf
+; 
+;    ret
 
 ; converts 1 byte to hex character, returns eax
-;int_to_hex:
-;    push bp
-;    mov bp, sp
-;
-;    xor eax,eax
-;    mov al, [bp+4]
-;    cmp al,9
-;    jg .b1
-;    add al, '0'
-;    jmp .b2
-;    .b1:
-;    sub al, 10
-;    add al, 'A'
-;    .b2:
-;
-;    mov sp, bp
-;    pop bp
-;    ret
-;
-;print_address:
-;    push bp         ; caller base stack pointer
-;    mov bp, sp      ; base pointer = stack pointer
-;    sub sp, 4       ; 4 bytes local variables
-;
-;    mov ax, [bp+4]
-;    mov word [bp-2], ax
-;    mov byte [bp-3], 0
-;
-;.loop_start:
-;    cmp byte [bp-3], 4
-;    jnl .loop_end
-;
-;    xor eax, eax
-;    mov ax, word [bp-2]
-;    and ax, 0xf000
-;    shr ax, 12
-;
-;    push ax
-;    call int_to_hex
-;    add sp,2
-;    ; return value in eax
-;    
-;    mov bh, 0x00        ; page number, 0 again
-;    mov bl, 0x00        ; foreground color, irrelevant - in text mode
-;    mov ah, 0x0E        ; print character to TTY
-;    int 0x10            ; print the character if we're not done
-;    
-;    mov ax, word[bp-2]
-;    shl ax, 4
-;    mov word[bp-2], ax
-;    mov al,byte[bp-3]
-;    add al, 1
-;    mov byte[bp-3], al
-;    jmp .loop_start 
-;.loop_end:
-;    mov sp, bp
-;    pop bp
-;    ret
+int_to_hex:
+    push bp
+    mov bp, sp
+
+    xor eax,eax
+    mov al, [bp+4]
+    cmp al,9
+    jg .b1
+    add al, '0'
+    jmp .b2
+    .b1:
+    sub al, 10
+    add al, 'A'
+    .b2:
+
+    mov sp, bp
+    pop bp
+    ret
+
+print_address:
+    push bp         ; caller base stack pointer
+    mov bp, sp      ; base pointer = stack pointer
+    sub sp, 4       ; 4 bytes local variables
+
+    mov ax, [bp+4]
+    mov word [bp-2], ax
+    mov byte [bp-3], 0
+
+.loop_start:
+    cmp byte [bp-3], 4
+    jnl .loop_end
+
+    xor eax, eax
+    mov ax, word [bp-2]
+    and ax, 0xf000
+    shr ax, 12
+
+    push ax
+    call int_to_hex
+    add sp,2
+    ; return value in eax
+    
+    mov bh, 0x00        ; page number, 0 again
+    mov bl, 0x00        ; foreground color, irrelevant - in text mode
+    mov ah, 0x0E        ; print character to TTY
+    int 0x10            ; print the character if we're not done
+    
+    mov ax, word[bp-2]
+    shl ax, 4
+    mov word[bp-2], ax
+    mov al,byte[bp-3]
+    add al, 1
+    mov byte[bp-3], al
+    jmp .loop_start 
+.loop_end:
+    mov sp, bp
+    pop bp
+    ret
 
 ; Prints null terminated string in SI to screen
 print:
