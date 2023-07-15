@@ -6,7 +6,6 @@ section .text
 global _start
 _start:
     cli
-
 ; Initialize segments
     jmp 0:go       ; ensure cs = 0
 go:   
@@ -15,9 +14,7 @@ go:
     mov ax, 0x07E0      ; 07E0h = (07C00h+200h)/10h, beginning of stack segment.
     mov ss, ax
     mov sp, 0x2000      ; 8k of stack space.
-
     mov [drive_num], dl   ; save drive number from bios
-
     sti
     
     ; init screen
@@ -39,11 +36,9 @@ go:
     mov si, disk_packet
 
     mov DWORD [dp_src_sector],1             
-    mov WORD [dp_dest_segment],0x1000     ; load kernel at physical address 0x1'00'00
+    mov WORD [dp_dest_segment],0x1000     ; load kernel at 0x10000 (128kb)
     mov WORD [dp_dest_offset],0
-
-    ;       FIX ME:
-    mov WORD [dp_num_sectors],9       ;  load 9 sectors
+    mov WORD [dp_num_sectors],31       ;  load next 31 sectors (15.5kb)
 
     int 0x13
     jc disk_error
@@ -57,7 +52,7 @@ go:
     mov esi,welcome_msg
     call print
 
-    ; setup GDT and IDT
+    ; setup GDT
     cli
     lgdt [gdt_r]
     mov eax, cr0
@@ -75,7 +70,7 @@ go:
     mov gs,ax
     mov ss,ax
 
-    jmp 0x10000 ; take jump to kernel entry
+    jmp 0x10000 ; take jump to kernel_entry
     hlt
 [bits 16]
 
@@ -238,13 +233,10 @@ print_address:
 print:
     mov bh, 0       ; page number
     mov ah, 0x0e    ; print character
-
     mov al, [si]
     add si, 1
-
     cmp al, 0
     je .return
-
     int 0x10        ; issue interrupt
     jmp print
 .return:

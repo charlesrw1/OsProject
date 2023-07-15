@@ -1,5 +1,4 @@
 OUTPUT_FORMAT("binary")
-STARTUP(kernel_start.o)
 ENTRY(_start)
 SECTIONS
 {

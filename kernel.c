@@ -6,6 +6,7 @@
 
 void error(const char* error_string);
 
+
 static inline void outb(uint16_t port, uint8_t val)
 {
 	asm  ("outb %0, %1" : : "a"(val), "Nd"(port) :"memory");
@@ -193,14 +194,8 @@ void vga_run_palette_tester()
 void kmain()
 {
 	init_vga_terminal();
-	print_string("Welcome to kmain, v0.1\n");
 	print_string("Hello world!\nNewline\nthird line\na\nb\nc\nd\ne\nf\ng\nh\ni\nj\nk\n");
-
-	int stackloc;
-	print_string("kmain: ");
-	print_hex32(kmain);
-	print_string("stack: ");
-	print_hex32(&stackloc);
+	print_hex32(256);
 
 	for(;;){}
 }

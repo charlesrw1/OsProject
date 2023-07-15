@@ -46,3 +46,12 @@ void* memmove(void* dest, const void* src, size_t count)
 	}
 	return dest;
 }
+void* memset(void* ptr, int value, size_t num)
+{
+    uint8_t* ptrc = ptr;
+    while(num--) {
+        *ptrc=value;
+        ptrc++;
+    }
+    return ptr;
+}
