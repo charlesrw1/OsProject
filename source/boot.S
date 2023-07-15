@@ -289,6 +289,7 @@ dp_dest_segment:
 dp_src_sector:
     dd 0x0      ; lower 32 source      
     dd 0x0      ; upper 16 source, +16 unused
+    
 
 times 510-($-$$) db 0
 dw 0xAA55

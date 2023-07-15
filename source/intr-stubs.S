@@ -1,5 +1,8 @@
-
 section .text
+bits 32
+extern intr_handler
+global intr_exit
+
 intr_entry:
     push ds
     push es
@@ -15,16 +18,14 @@ intr_entry:
     
     push esp
 ; defined in interrupt.c
-global intr_handler
     call intr_handler
     add esp, 4
 
 ; intentional fall-through
 
-global intr_exit
 intr_exit:
     popa
-    pop
+    pop gs
 
 
 ; push frame on stack
@@ -35,11 +36,11 @@ intr_exit:
 section .text
 intr%1_stub:
     push ebp
-    push 0
-    push %1
+    push DWORD 0
+    push DWORD %1
     jmp intr_entry
 
-    section .data
+section .data
     dd intr%1_stub
 %endmacro
 
@@ -50,9 +51,9 @@ intr%1_stub:
 %macro ISR_ERR 1
 section .text
 intr%1_stub:
-    push [esp]
+    push DWORD [esp]
     mov [esp+4], ebp
-    push %1
+    push DWORD %1
     jmp intr_entry
 
 section .data
@@ -61,6 +62,7 @@ section .data
 
 ; array of ISRs in interrupt.c
 
+section .data
 global intr_stubs
 intr_stubs:
 

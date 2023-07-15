@@ -23,12 +23,9 @@ static void copy_bytes_backwards(void* dest, const void* src, size_t count)
 {
 	uint8_t* ptrd=dest;
 	const uint8_t* ptrs=src; 
-	ptrd+=count;
-	ptrs+=count;
-	while(count--) {
-		*ptrd = *ptrs;
-		--ptrd;
-		--ptrs;
+	for(size_t i = count;i>0;i--)
+	{
+		ptrd[i-1]=ptrs[i-1];
 	}
 }
 

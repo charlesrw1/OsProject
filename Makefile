@@ -1,32 +1,56 @@
 CC=i386-elf-gcc
 LD=i386-elf-ld
-CFLAGS=-ffreestanding
+CFLAGS=-ffreestanding -g
+NASMFLAGS= -g
 
-BOOTSRC = ./source/boot.S
-KERNEL_CSRC = $(wildcard ./source/*.c)
-KERNEL_SSRC = $(filter-out $(BOOTSRC) ./source/intr-stubs.S, $(wildcard ./source/*.S))
-KERNEL_COBJ = $(KERNEL_CSRC:.c=.o)
-KERNEL_SOBJ = $(KERNEL_SSRC:.S=.o)
-KERNEL_OBJ = $(KERNEL_COBJ) $(KERNEL_SOBJ)
+SRC_DIR = ./source
+BUILD_DIR = ./bin
 
-all: osimg
+BOOT_SRC = ./source/boot.S
+BOOT_BIN = ./bin/boot.bin
+KERNEL_SRC = $(wildcard $(SRC_DIR)/*.c) $(filter-out $(BOOT_SRC), $(wildcard $(SRC_DIR)/*.S))
+KERNEL_OBJS = $(KERNEL_SRC:$(SRC_DIR)/%=$(BUILD_DIR)/%.o) # source/myfile.c -> bin/myfile.c.o
 
-$(KERNEL_COBJ): %.o : %.c
-	 $(CC) -o $@ -c $< $(CFLAGS)
+KERNEL_EXE = ./bin/kernel.elf
+KERNEL_DBG_SYMBOLS = ./bin/kernel.sym
+KERNEL_BIN = ./bin/kernel.bin
+OSIMAGE = ./bin/osimage.bin
 
-$(KERNEL_SOBJ): %.o : %.S
-	nasm -f elf -o $@ $<
+all: prep $(OSIMAGE) $(KERNEL_DBG_SYMBOLS)
 
-kernel: $(KERNEL_OBJ)
-	$(LD) -o ./bin/kernel.bin  $(KERNEL_OBJ) -T source/link.ld
+prep:
+	@mkdir -p $(BUILD_DIR)
 
-bootloader:
-	nasm -f bin -o ./bin/boot.bin $(BOOTSRC)
+# C source files
+$(BUILD_DIR)/%.c.o : $(SRC_DIR)/%.c
+	$(CC) -o $@ -c $< $(CFLAGS)
 
-osimg: bootloader kernel
+# Asm source files
+$(BUILD_DIR)/%.S.o : $(SRC_DIR)/%.S
+	nasm -f elf -o $@ $< $(NASMFLAGS)
+
+$(KERNEL_EXE): $(KERNEL_OBJS)
+	$(LD) -o $@  $(KERNEL_OBJS) -T $(SRC_DIR)/link.ld
+
+$(KERNEL_BIN): $(KERNEL_EXE)
+	objcopy -O binary $(KERNEL_EXE) $(KERNEL_BIN)
+
+$(BOOT_BIN): $(BOOT_SRC)
+	nasm -f bin -o $@ $<
+
+$(OSIMAGE): $(KERNEL_BIN) $(BOOT_BIN)
 	dd if=/dev/zero of=osimg.bin bs=512 count=32
 	dd if=./bin/boot.bin of=osimg.bin conv=notrunc
 	dd if=./bin/kernel.bin of=osimg.bin conv=notrunc bs=512 seek=1
 	mv ./osimg.bin ./bin/osimage.bin
-	trash $(KERNEL_OBJ)
+
+$(KERNEL_DBG_SYMBOLS): $(KERNEL_EXE)
+	objcopy --only-keep-debug $< $@
+
+clean:
+	rm -f $(KERNEL_OBJS)
+	rm -f $(KERNEL_DBG_SYMBOLS)
+	rm $(KERNEL_EXE)
+	rm $(KERNEL_BIN)
+	rm $(BOOT_BIN)
 

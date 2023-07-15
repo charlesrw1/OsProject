@@ -3,8 +3,8 @@
 #include <stdbool.h>
 
 #include "string.h"
-
-void error(const char* error_string);
+#include "out.h"
+#include "interrupt.h"
 
 static inline void outb(uint16_t port, uint8_t val)
 {
@@ -105,13 +105,12 @@ void vga_scroll_terminal(int lines)
 		return;
 	}
 
-	uint16_t* src = terminal_buffer + VGA_WIDTH*lines;
-	size_t count = VGA_WIDTH*(VGA_HEIGHT-lines)*sizeof(uint16_t);
+	uint16_t* src = &terminal_buffer[VGA_WIDTH*lines];
+	size_t count = VGA_WIDTH*(VGA_HEIGHT-lines-1)*2;
 	memmove(terminal_buffer,src,count);
-	for(int y=0;y<lines;y++) {
-		for(int x=0;x<VGA_WIDTH;x++) {
-			vga_put_char_at(' ',terminal_color,x,VGA_HEIGHT-1-lines);
-		}
+	for(int y=VGA_HEIGHT-lines-1;y<VGA_HEIGHT;y++) {
+		for(int x=0;x<VGA_WIDTH;x++)
+			vga_put_char_at(' ',terminal_color,x,y);
 	}
 }
 
@@ -144,6 +143,11 @@ void vga_put_char(char c)
 	if(terminal_row>=VGA_HEIGHT) {
 		terminal_row=0;
 	}
+	// leave 2 spaces
+	if(terminal_row>=VGA_HEIGHT-1) {
+		vga_scroll_terminal(1);
+		terminal_row=VGA_HEIGHT-2;
+	}
 	if(update_cursor)
 		vga_update_cursor(terminal_col,terminal_row);
 }
@@ -161,7 +165,7 @@ void print_hex32(uint32_t number)
 	vga_put_char('0');
 	vga_put_char('x');
 
-	for(int i=0;i<8 && number!=0;i++)
+	for(int i=0;i<8;i++)
 	{
 		int a = (number>>((7-i)*4))&0xf;
 		char c =0;
@@ -190,17 +194,14 @@ void vga_run_palette_tester()
 
 }
 
+
 void kmain()
 {
 	init_vga_terminal();
-	print_string("Welcome to kmain, v0.1\n");
-	print_string("Hello world!\nNewline\nthird line\na\nb\nc\nd\ne\nf\ng\nh\ni\nj\nk\n");
+	print_string("Welcome to kmain, v0.22\n");
+	print_string("new");
 
-	int stackloc;
-	print_string("kmain: ");
-	print_hex32(kmain);
-	print_string("stack: ");
-	print_hex32(&stackloc);
+	init_interrupt();
 
 	for(;;){}
 }
