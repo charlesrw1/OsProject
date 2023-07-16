@@ -1,42 +1,15 @@
 section .text
 bits 32
-extern intr_handler
-global intr_exit
 
-intr_entry:
-    push ds
-    push es
-    push fs
-    push gs
-    pusha
-
-    ; FIXME:
-    mov eax, 0x10   ; kernel code segment
-    mov ds, eax
-    mov es, eax
-    lea ebp, [esp+56]
-    
-    push esp
-; defined in interrupt.c
-    call intr_handler
-    add esp, 4
-
-; intentional fall-through
-
-intr_exit:
-    popa
-    pop gs
-
-
-; push frame on stack
-; push error code (0)
+; push dummy error code (0)
+; push frame
 ; push interrupt number
 
 %macro ISR_NO_ERR 1
 section .text
 intr%1_stub:
-    push ebp
     push DWORD 0
+    push ebp
     push DWORD %1
     jmp intr_entry
 
@@ -44,15 +17,14 @@ section .data
     dd intr%1_stub
 %endmacro
 
-; push a duplicate of the error code
-; replace the original error code with stack frame
+; error code on stack already
+; push frame
 ; push interrupt number
 
 %macro ISR_ERR 1
 section .text
 intr%1_stub:
-    push DWORD [esp]
-    mov [esp+4], ebp
+    push ebp
     push DWORD %1
     jmp intr_entry
 
@@ -61,7 +33,6 @@ section .data
 %endmacro
 
 ; array of ISRs in interrupt.c
-
 section .data
 global intr_stubs
 intr_stubs:
@@ -114,3 +85,35 @@ ISR_NO_ERR 44
 ISR_NO_ERR 45
 ISR_NO_ERR 46
 ISR_NO_ERR 47
+
+extern interrupt_handler_common
+
+section .text
+intr_entry:
+; FUGGGG
+    o16 push ds
+    o16 push es
+    o16 push fs
+    o16 push gs
+    pusha
+
+    mov eax, 0x10   ; kernel code segment
+    mov ds, eax
+    mov es, eax
+    mov fs, eax
+    mov gs, eax
+
+    cld
+    push esp
+; defined in interrupt.c
+    call interrupt_handler_common
+    add esp, 4
+
+    popa
+    o16 pop gs
+    o16 pop fs
+    o16 pop es
+    o16 pop ds
+; intr_frame, vec_number, error
+    add esp, 12
+    iret

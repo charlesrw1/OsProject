@@ -19,29 +19,18 @@ void* memcpy(void* dest,const void* src, size_t count)
 	return dest;
 }
 
-static void copy_bytes_backwards(void* dest, const void* src, size_t count)
+void* memmove(void* dstptr, const void* srcptr, size_t size)
 {
-	uint8_t* ptrd=dest;
-	const uint8_t* ptrs=src; 
-	for(size_t i = count;i>0;i--)
-	{
-		ptrd[i-1]=ptrs[i-1];
+	unsigned char* dst = (unsigned char*) dstptr;
+	const unsigned char* src = (const unsigned char*) srcptr;
+	if (dst < src) {
+		for (size_t i = 0; i < size; i++)
+			dst[i] = src[i];
+	} else {
+		for (size_t i = size; i != 0; i--)
+			dst[i-1] = src[i-1];
 	}
-}
-
-void* memmove(void* dest, const void* src, size_t count)
-{
-	unsigned int desti = (unsigned int)dest;
-	unsigned int srci = (unsigned int)src;
-	if(desti-srci>=count)	// unsigned compare
-	{
-		memcpy(dest,src,count);
-	}
-	else
-	{
-		copy_bytes_backwards(dest,src,count);
-	}
-	return dest;
+	return dstptr;
 }
 void* memset(void* ptr, int value, size_t num)
 {

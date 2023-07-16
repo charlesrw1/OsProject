@@ -1,7 +1,7 @@
 CC=i386-elf-gcc
 LD=i386-elf-ld
-CFLAGS=-ffreestanding -g
-NASMFLAGS= -g
+CFLAGS=-ffreestanding -g -MMD -MP
+NASMFLAGS= -g -f elf
 
 SRC_DIR = ./source
 BUILD_DIR = ./bin
@@ -23,17 +23,17 @@ prep:
 
 # C source files
 $(BUILD_DIR)/%.c.o : $(SRC_DIR)/%.c
-	$(CC) -o $@ -c $< $(CFLAGS)
+	$(CC) $(CFLAGS) -o $@ -c $<
 
 # Asm source files
 $(BUILD_DIR)/%.S.o : $(SRC_DIR)/%.S
-	nasm -f elf -o $@ $< $(NASMFLAGS)
+	nasm $(NASMFLAGS) -o $@ $<
 
 $(KERNEL_EXE): $(KERNEL_OBJS)
 	$(LD) -o $@  $(KERNEL_OBJS) -T $(SRC_DIR)/link.ld
 
 $(KERNEL_BIN): $(KERNEL_EXE)
-	objcopy -O binary $(KERNEL_EXE) $(KERNEL_BIN)
+	objcopy -O binary $< $@
 
 $(BOOT_BIN): $(BOOT_SRC)
 	nasm -f bin -o $@ $<
@@ -50,7 +50,9 @@ $(KERNEL_DBG_SYMBOLS): $(KERNEL_EXE)
 clean:
 	rm -f $(KERNEL_OBJS)
 	rm -f $(KERNEL_DBG_SYMBOLS)
+	rm -f $(KERNEL_OBJS:%.o=%.d)
 	rm $(KERNEL_EXE)
 	rm $(KERNEL_BIN)
 	rm $(BOOT_BIN)
 
+-include $(KERNEL_OBJS:%.o=%.d)

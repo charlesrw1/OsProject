@@ -6,17 +6,6 @@
 #include "out.h"
 #include "interrupt.h"
 
-static inline void outb(uint16_t port, uint8_t val)
-{
-	asm  ("outb %0, %1" : : "a"(val), "Nd"(port) :"memory");
-}
-
-static inline uint8_t inb(uint16_t port)
-{
-    uint8_t ret;
-    asm  ( "inb %1, %0": "=a"(ret): "Nd"(port): "memory");
-    return ret;
-}
 
 typedef enum {
 	VGA_COLOR_BLACK = 0,
@@ -194,14 +183,15 @@ void vga_run_palette_tester()
 
 }
 
-
 void kmain()
 {
 	init_vga_terminal();
-	print_string("Welcome to kmain, v0.22\n");
-	print_string("new");
+	print_string("Welcome to kmain\n");
 
-	init_interrupt();
+	interrupt_init();
+	printf("abc");
+
+	print_string("done!\n");
 
 	for(;;){}
 }
