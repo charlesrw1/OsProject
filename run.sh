@@ -1,3 +1,4 @@
+#!/bin/bash     
 make
 #to bypass issue with WSL and qemu
 cp ./bin/osimage.bin /mnt/e/Users/charl/Downloads/

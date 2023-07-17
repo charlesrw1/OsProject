@@ -3,6 +3,7 @@
 #include "interrupt.h"
 #include "string.h"
 #include "out.h"
+#include "ports.h"
 // Interrupt descriptor table
 #define NUM_IDT_ENTRIES 256
 static uint64_t idt[NUM_IDT_ENTRIES];
@@ -167,6 +168,17 @@ void exceptions_init()
     }
 }
 
+void interrupt_handler_common(struct intr_registers* reg)
+{
+    if(intr_handlers[reg->vec_no])
+        intr_handlers[reg->vec_no](reg);
+    else
+        print_string("Unexpected interrupt\n");
+
+    print_string("exception handled\n");
+    print_hex32(reg->vec_no);
+}
+
 void interrupt_init()
 {
     memset(idt,0,sizeof(idt));
@@ -185,14 +197,4 @@ void interrupt_init()
 
     asm volatile ("sti");
 
-}
-void interrupt_handler_common(struct intr_registers* reg)
-{
-    if(intr_handlers[reg->vec_no])
-        intr_handlers[reg->vec_no](reg);
-    else
-        print_string("Unexpected interrupt\n");
-
-    print_string("exception handled\n");
-    print_hex32(reg->vec_no);
 }

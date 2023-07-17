@@ -3,3 +3,6 @@
 bin/
 *.save
 .vscode/
+*.iso
+*.d
+*.elf

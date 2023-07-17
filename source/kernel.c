@@ -5,6 +5,7 @@
 #include "string.h"
 #include "out.h"
 #include "interrupt.h"
+#include "ports.h"
 
 
 typedef enum {
