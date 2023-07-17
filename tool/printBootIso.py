@@ -35,7 +35,9 @@ with open(iso_name, "rb") as file:
     file.seek(boot_catalog_boot_entry+0x8)
     load_rba = struct.unpack("<I",file.read(4))[0]
 
-    print("%define NUM_BOOT_SECTORS 0x" + format(num_sectors,"x") + "\n"
+    # Sectors on a CD-ROM should be 2kb
+    # Both values are in total bytes, need to be converted to sectors in bootloader
+    print("%define BOOT_LOAD_SIZE 0x" + format(num_sectors*0x200,"x") + "\n"
           + "%define BOOT_LOAD_ADDR 0x" + format(load_rba*0x800,"x") +"\n")
 
     

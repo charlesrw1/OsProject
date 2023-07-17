@@ -6,7 +6,7 @@ NASMFLAGS= -g -f elf
 SRC_DIR = ./source
 BUILD_DIR = ./bin
 
-BOOT_SRC = ./source/boot.S
+BOOT_SRC = ./source/boot.S ./source/start.S
 BOOT_BIN = ./bin/boot.bin
 KERNEL_SRC = $(wildcard $(SRC_DIR)/*.c) $(filter-out $(BOOT_SRC), $(wildcard $(SRC_DIR)/*.S))
 KERNEL_OBJS = $(KERNEL_SRC:$(SRC_DIR)/%=$(BUILD_DIR)/%.o) # source/myfile.c -> bin/myfile.c.o
@@ -16,7 +16,9 @@ KERNEL_DBG_SYMBOLS = ./bin/kernel.sym
 KERNEL_BIN = ./bin/kernel.bin
 OSIMAGE = ./bin/osimage.bin
 
-all: prep $(OSIMAGE) $(KERNEL_DBG_SYMBOLS)
+BOOTLOADER_LINKER = ./bootloader/link.ld
+
+all: prep $(KERNEL_BIN) $(KERNEL_DBG_SYMBOLS)
 
 prep:
 	@mkdir -p $(BUILD_DIR)
@@ -30,7 +32,7 @@ $(BUILD_DIR)/%.S.o : $(SRC_DIR)/%.S
 	nasm $(NASMFLAGS) -o $@ $<
 
 $(KERNEL_EXE): $(KERNEL_OBJS)
-	$(LD) -o $@  $(KERNEL_OBJS) -T $(SRC_DIR)/link.ld
+	$(LD) -o $@  $(KERNEL_OBJS) -T $(BOOTLOADER_LINKER)
 
 $(KERNEL_BIN): $(KERNEL_EXE)
 	objcopy -O binary $< $@
