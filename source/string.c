@@ -41,3 +41,33 @@ void* memset(void* ptr, int value, size_t num)
     }
     return ptr;
 }
+
+int memcmp(const void* p1, const void* p2, size_t num)
+{
+	const uint8_t* ptr1 = p1;
+	const uint8_t* ptr2 = p2;
+	while(num>0) {
+		if(*ptr1 != *ptr2)
+			return (*ptr1 > *ptr2) ? 1 : -1;
+		ptr1++;
+		ptr2++;
+		num--;
+	}
+	return 0;
+}
+
+const char* strsplit(const char* input, char delim, char* buffer)
+{
+	while(*input && *input != delim)
+	{
+		*buffer = *input;
+		++buffer;
+		++input;
+	}
+	*buffer = 0;
+	if(*input == 0)
+		return NULL;
+	if(*input == '/')
+		return input+1;
+	return NULL;
+}

@@ -1,6 +1,6 @@
 bits 16
 
-; MBR, loads the boot sector off an ISO
+; MBR, loads the boot image off a CD-ROM if being emulated as a floppy
 ; this is skipped if loaded with no-emulation
 
 ; BOOT_LOAD_SIZE and BOOT_LOAD_ADDR are pasted during build
@@ -178,7 +178,6 @@ drive_parameters_buffer:
 drive_bytes_per_sector:
     dw 0
     dd 0
-
 
 drive_num:
     db 0

@@ -1,0 +1,34 @@
+use -g -F dwarf to add debug symbols to files
+for WSL2, use windows ip to connect to qeumu
+objdump -S -Mintel <c file> to view source along with machine code
+-m32 flag for gcc to compile 32 bit
+
+-For x86
+use eax to return function values
+push to send arguments, send args as 4 bytes
+
+x86 is little endian, first byte is first, opposite the way its read
+0x4321 -> [1][2][3][4]
+means that a 16bit word is read [ebp-2], not [ebp-1]
+
+remember to subtract esp when making locals so later "push" calls dont corrupt them
+ebp needs to be set in main function when compiling gcc
+"call" instruction adds a 16/32/64 bit value to stack, so take into account when finding arg values
+-> the first argument is at [bp+4] in 16bit or [bp+8] in 32 bit
+
+segment registers:
+every x86 address uses some segment register, of the form physical = 0x10*segment + offset
+when using ebp, or esp, stack segment (ss) is implicit
+
+why I was confused about segment+offsets:
+ORG specifies start of absolute addresses to assembler
+function calls do NOT use absolute, they use near, relative addresses
+QEMU/the BIOS starts CS at 0 and IP at 0x7c00. Thus the instructions work as expected
+I could also do a JMP to 0x07c0:0 which would be the same physical address
+
+the DS register matters though. ORG will change where absolute data adresses are, and thus DS needs to be set accordingly
+if ORG is 0, then DS should be 0x07c0, if ORG is 0x7c00, then ds should be 0
+
+6/24: jumps to protected mode and loads disk correctly, next step: writing the kernel and loading
+it to disk image. Also the stage0 bootloader is almost out of memory, you should probably add a 2nd
+stage so you can get more information from the bios (memory map info, device info)

@@ -88,7 +88,7 @@ static void pic_init()
   outb (PIC1_DATA, 0x00);
 }
 
-void register_irq(int num, intr_handler_func* func, const char* name)
+void register_irq(int num, intr_handler_func* func)
 {
     intr_disable();
     irq_handlers[num]=func;
@@ -157,7 +157,7 @@ static const char* exception_names[]=
 
 void simple_exception_handler(struct intr_registers* reg)
 {
-    ASSERT(reg->vec_no>=0&&reg->vec_no<32);
+    ASSERT(reg->vec_no<32);
     error(exception_names[reg->vec_no]);
 }
 
@@ -189,7 +189,7 @@ void interrupt_init()
     }
     uint64_t idt_descriptor=0;
     idt_descriptor |= (sizeof(idt) - 1);
-    idt_descriptor |= (uint64_t)(idt) << 16;
+    idt_descriptor |= (uint64_t)idt << 16;
     asm volatile ("lidt %0" : : "m" (idt_descriptor));
 
     irq_init();

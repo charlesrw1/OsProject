@@ -1,5 +1,4 @@
 #!/bin/bash     
-#echo $(./tool/printBootIso.py ./bin/iso/myos.iso) > tempConcatBootFile.S
 make
 
 rm ./bin/iso/myos.iso
@@ -9,6 +8,7 @@ cd ./../../
 ./tool/printBootIso.py ./bin/iso/myos.iso > bootTemp.S
 cat ./bootloader/boot1.S >> bootTemp.S
 nasm -f bin -o ./bin/boot1.bin bootTemp.S
+rm bootTemp.S
 dd if=./bin/boot1.bin of=./bin/iso/myos.iso conv=notrunc
 
 #to bypass issue with WSL and qemu
@@ -22,5 +22,5 @@ if [[ $1 == debug ]]; then
      -ex "br _start" -ex "c"
 
 else
-    qemu-system-i386.exe -drive format=raw,file=myos.iso
+    qemu-system-i386.exe -cdrom myos.iso
 fi

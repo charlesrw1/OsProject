@@ -37,7 +37,7 @@ typedef intr_handler_func irq_handler;
 
 // Called by interrupts in intr-stubs.S
 void interrupt_handler_common(struct intr_registers* reg);
-void register_irq(int num, irq_handler* func, const char* name);
+void register_irq(int num, irq_handler* func);
 void register_interrupt(int vec_num, intr_handler_func* func, int dpl, enum gate_type gate);
 void interrupt_init();
 
